@@ -1,0 +1,14 @@
+create table issue_location (
+        instance_id varchar(255),
+        file_path varchar(255),
+        class varchar(255),
+        method varchar(255),
+        start_line int,
+        end_line int,
+        start_offset int,
+        end_offset int,
+        code varchar(255),
+        msg varchar(255),
+        primary key(instance_id, file_path, class, method, start_line, end_line, start_offset, end_offset)
+        foreign key(instance_id) references issue_instance(instance_id)
+        )

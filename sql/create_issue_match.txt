@@ -1,0 +1,13 @@
+create table issue_match (
+        instance_id varchar(255),
+        parent_instance_id varchar(255),
+        commit_hash varchar(255),
+        parent_commit_hash varchar(255),
+        status varchar(255),
+        case_id varchar(255),
+        ord varchar(255),
+        primary key(instance_id,parent_instance_id)
+        foreign key(case_id) references issue_case(case_id)
+        foreign key(instance_id) references issue_instance(instance_id)
+        foreign key(parent_instance_id) references issue_instance(instance_id)
+        )

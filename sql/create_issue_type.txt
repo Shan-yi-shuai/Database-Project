@@ -1,0 +1,9 @@
+create table issue_type (
+        type_id varchar(255),
+        rule varchar(255),
+        severity varchar(255),
+        type varchar(255),
+        scope varchar(255),
+        quickFixAvailable varchar(255),
+        primary key(type_id)
+        )

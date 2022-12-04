@@ -1,0 +1,11 @@
+create table issue_instance (
+        instance_id varchar(255),
+        type_id varchar(255),
+        commit_hash varchar(255),
+        commit_time datetime,
+        committer varchar(255),
+        file_path varchar(255),
+        description varchar(1023),
+        primary key(instance_id)
+        foreign key(type_id) references issue_type(type_id)
+        )

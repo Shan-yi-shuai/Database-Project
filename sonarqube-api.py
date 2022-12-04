@@ -26,7 +26,10 @@ class SonarQube:
         return measures
     # 获取issue信息
     def getIssues(self, component):
-        return list(s.client.issues.search_issues(componentKeys=component))
+        return list(self.client.issues.search_issues(componentKeys=component))
+
+    def test(self):
+        return self.client.metrics.search_metrics()
 
 
 
@@ -38,4 +41,6 @@ for project_info in all_project_info:
     # 获取所有issues的信息
     issues = s.getIssues(component)
     # print(b)
-    print(issues[0],issues[1])
+    # print(issues[0],issues[1])
+    test = s.test()
+    print(test)
