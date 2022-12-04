@@ -6,6 +6,6 @@ create table issue_instance (
         committer varchar(255),
         file_path varchar(255),
         description varchar(1023),
-        primary key(instance_id)
+        primary key(instance_id),
         foreign key(type_id) references issue_type(type_id)
         )
