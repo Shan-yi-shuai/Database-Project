@@ -17,6 +17,14 @@ class SonarQube:
         projects=list(self.client.projects.search_projects())
         return projects
 
+    # 获取项目
+    def getProject(self,key):
+        projects = self.getProjects()
+        for i in range(len(projects)):
+            if projects[i]['key'] == key:
+                return projects[i]
+        return None
+
     # 获取项目各个参数数据
     def getMeasures(self, component):
         metricKeys = "alert_status,bugs,,vulnerabilities,security_rating,code_smells,duplicated_lines_density,coverage,ncloc"
@@ -33,14 +41,14 @@ class SonarQube:
 
 
 
-s = SonarQube()
-all_project_info = s.getProjects()
-for project_info in all_project_info:
-    component = project_info.get("key")
-    b = s.getMeasures(component)
-    # 获取所有issues的信息
-    issues = s.getIssues(component)
-    # print(b)
-    # print(issues[0],issues[1])
-    test = s.test()
-    print(test)
+# s = SonarQube()
+# all_project_info = s.getProjects()
+# for project_info in all_project_info:
+#     component = project_info.get("key")
+#     b = s.getMeasures(component)
+#     # 获取所有issues的信息
+#     issues = s.getIssues(component)
+#     # print(b)
+#     print(type(issues[0]['flows'][0]['locations'][0]['textRange']['startLine']))
+#     # test = s.test()
+#     # print(test)

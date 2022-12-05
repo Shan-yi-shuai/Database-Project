@@ -1,6 +1,6 @@
 create table issue_location (
-        location_id varchar(255),
-        instance_id varchar(255),
+        location_id int AUTO_INCREMENT,
+        instance_id int,
         file_path varchar(255),
         class varchar(255),
         method varchar(255),

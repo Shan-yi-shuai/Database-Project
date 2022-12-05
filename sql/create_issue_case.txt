@@ -1,6 +1,6 @@
 create table issue_case (
         case_id varchar(255),
-        type_id varchar(255),
+        type_id int,
         commit_hash_new varchar(255),
         committer_new varchar(255),
         time_new datetime,

@@ -1,5 +1,5 @@
 create table issue_type (
-        type_id varchar(255),
+        type_id int AUTO_INCREMENT,
         rule varchar(255),
         severity varchar(255),
         type varchar(255),

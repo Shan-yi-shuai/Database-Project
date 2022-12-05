@@ -1,6 +1,6 @@
 create table issue_match (
-        instance_id varchar(255),
-        parent_instance_id varchar(255),
+        instance_id int,
+        parent_instance_id int,
         commit_hash varchar(255),
         parent_commit_hash varchar(255),
         status varchar(255),
