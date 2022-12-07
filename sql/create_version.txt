@@ -1,0 +1,7 @@
+create table version (
+        version_id int AUTO_INCREMENT,
+        commit_hash varchar(255),
+        commit_time varchar(255),
+        committer varchar(255),
+        primary key(version_id)
+        )

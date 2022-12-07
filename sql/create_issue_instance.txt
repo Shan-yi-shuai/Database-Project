@@ -1,11 +1,13 @@
 create table issue_instance (
         instance_id int AUTO_INCREMENT,
         type_id int,
+        version_id int,
         commit_hash varchar(255),
         commit_time varchar(255),
         committer varchar(255),
         file_path varchar(255),
         description varchar(1023),
         primary key(instance_id),
-        foreign key(type_id) references issue_type(type_id)
+        foreign key(type_id) references issue_type(type_id),
+        foreign key(version_id) references version(version_id)
         )

@@ -1,6 +1,7 @@
 import pymysql
 import pandas as pd
 import datetime
+from pymysql.converters import escape_string
 
 class Database:
     def __init__(self, config:dict):
@@ -50,10 +51,8 @@ class Database:
         if value == 'null':
             return value
         if type(value) == str:
-            if "'" not in value:
-                return "'%s'" % value
-            else:
-                return '"%s"' % value
+            value =escape_string(value)
+            return "'%s'" % value
         return value
     # 插入数据
     def insert_issue_location(self,issue,instance_id):
@@ -61,9 +60,9 @@ class Database:
         table_key = ['instance_id','file_path','class','method','start_line','end_line','start_offset','end_offset','code','msg']
         key_str = ','.join(table_key)
         if len(issue['flows']) != 0:
-            locations = issue['flows'][0]['locations']
-            for i in range(len(locations)):
-                value = [instance_id,issue['component'],'null', 'null',locations[i]['textRange']['startLine'], locations[i]['textRange']['endLine'], locations[i]['textRange']['startOffset'], locations[i]['textRange']['endOffset'], 'null', locations[i]['msg']]
+            for i in range(len(issue['flows'])):
+                locations = issue['flows'][i]['locations'][0]
+                value = [instance_id,issue['component'],'null', 'null',locations['textRange']['startLine'], locations['textRange']['endLine'], locations['textRange']['startOffset'], locations['textRange']['endOffset'], 'null', locations['msg']]
                 value_str = ','.join(self.to_sql(value) for value in value)
                 sql = "insert into %s(%s) values(%s)" %(table_name, key_str, value_str)
                 result = self.execute(sql)
@@ -83,19 +82,20 @@ class Database:
             self.conn.commit()
             return True
 
-    def insert_issue_instance(self,issue,type_id):
+    def insert_issue_instance(self,issue,type_id,version_id):
         table_name = 'issue_instance'
-        table_key = ['type_id','commit_hash','commit_time','committer','file_path','description']
+        table_key = ['type_id','version_id','commit_hash','commit_time','committer','file_path','description']
         key_str = ','.join(table_key)
-        value = [type_id,issue['hash'],issue['creationDate'],issue['author'],issue['component'],issue['message']]
+        value = [type_id,version_id,issue['hash'],issue['creationDate'],issue['author'],issue['component'],issue['message']]
         value_str = ','.join(self.to_sql(value) for value in value)
         sql = "insert into %s(%s) values(%s)" %(table_name, key_str, value_str)
         result = self.execute(sql)
+        id = self.cursor.lastrowid
         if result != True:
             self.conn.rollback()
             return -1
         self.conn.commit()
-        return result
+        return id
     
     def insert_issue_type(self,issue):
         table_name = 'issue_type'
@@ -116,8 +116,22 @@ class Database:
             self.conn.rollback()
             return -1
         self.conn.commit()
-        return result
+        return self.cursor.lastrowid
 
+    def insert_version(self,issue):
+        table_name = 'version'
+        table_key = ['commit_hash','commit_time','committer']
+        key_str = ','.join(table_key)
+        value = [issue['hash'],issue['creationDate'],issue['author']]
+        value_str = ','.join(self.to_sql(value) for value in value)
+        sql = "insert into %s(%s) values(%s)" %(table_name, key_str, value_str)
+        result = self.execute(sql)
+        id = self.cursor.lastrowid
+        if result != True:
+            self.conn.rollback()
+            return -1
+        self.conn.commit()
+        return id
 
     # def insert_table(self,data,table_name):
     #     def to_sql(value):
