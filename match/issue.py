@@ -1,5 +1,6 @@
 class RawIssueLocation:
-    def __init__(self, file_path: str, start_line: int, end_line: int, start_offset: int, end_offset: int) -> None:
+    def __init__(self, id: int, file_path: str, start_line: int, end_line: int, start_offset: int, end_offset: int) -> None:
+        self.id = id
         self.file_path = file_path
         self.start_line = start_line
         self.end_line = end_line
@@ -7,8 +8,8 @@ class RawIssueLocation:
         self.end_offset = end_offset
 
 class IssueLocation(RawIssueLocation):
-    def __init__(self, file_path: str, start_line: int, end_line: int, start_offset: int, end_offset: int, code: str, records: list[str], include_records: list[str]) -> None:
-        super().__init__(file_path, start_line, end_line, start_offset, end_offset)
+    def __init__(self, id: int, file_path: str, start_line: int, end_line: int, start_offset: int, end_offset: int, code: str, records: list[str], include_records: list[str]) -> None:
+        super().__init__(id, file_path, start_line, end_line, start_offset, end_offset)
         self.code = code
         self.records = records
         self.include_records = include_records

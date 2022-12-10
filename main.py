@@ -1,5 +1,6 @@
 from sonarqube_api import *
 from database_api import *
+from match.location_processor import *
 
 
 # 获取数据库配置
@@ -29,8 +30,17 @@ s = SonarQube()
 # project = s.getProject('test')
 issues = s.getIssues('pj_repo')
 version_id = database.insert_version(issues[0])
+issue_location_dict = dict()
 for issue in issues:
     issue_type_id = database.insert_issue_type(issue)
     issue_instance_id = database.insert_issue_instance(issue, issue_type_id,version_id)
-    database.insert_issue_location(issue,issue_instance_id)
-    
+    database.insert_issue_location(issue, issue_instance_id, issue_location_dict)
+
+# print(issue_location_dict)
+repo_dir = "D:\\Git\\Git\\test-repo-for-database-pj\\"
+for file_path in issue_location_dict:
+    processor = LocationProcessor(repo_dir + file_path)
+    for raw_location in issue_location_dict[file_path]:
+        location = processor.process(raw_location)
+        print("---------------------------------")
+        print(location.id, location.code, location.include_records)

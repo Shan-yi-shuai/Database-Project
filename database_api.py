@@ -2,6 +2,7 @@ import pymysql
 import pandas as pd
 import datetime
 from pymysql.converters import escape_string
+from match.issue import *
 
 class Database:
     def __init__(self, config:dict):
@@ -55,22 +56,26 @@ class Database:
             return "'%s'" % value
         return value
     # 插入数据
-    def insert_issue_location(self,issue,instance_id):
+    def insert_issue_location(self, issue, instance_id, res: dict):
         table_name = 'issue_location'
         table_key = ['instance_id','file_path','class','method','start_line','end_line','start_offset','end_offset','code','msg']
         key_str = ','.join(table_key)
         if len(issue['flows']) != 0:
             for i in range(len(issue['flows'])):
                 locations = issue['flows'][i]['locations'][0]
-                value = [instance_id,issue['component'],'null', 'null',locations['textRange']['startLine'], locations['textRange']['endLine'], locations['textRange']['startOffset'], locations['textRange']['endOffset'], 'null', locations['msg']]
+                value = [instance_id,locations['component'],'null', 'null',locations['textRange']['startLine'], locations['textRange']['endLine'], locations['textRange']['startOffset'], locations['textRange']['endOffset'], 'null', locations['msg']]
                 value_str = ','.join(self.to_sql(value) for value in value)
                 sql = "insert into %s(%s) values(%s)" %(table_name, key_str, value_str)
                 result = self.execute(sql)
+                location_id = self.cursor.lastrowid
                 if result != True:
                     self.conn.rollback()
                     return False
                 self.conn.commit()
-            return True
+                file_path = locations['component'].split(":")[1]
+                if file_path not in res:
+                    res[file_path] = []
+                res[file_path].append(RawIssueLocation(location_id, file_path, locations['textRange']['startLine'], locations['textRange']['endLine'], locations['textRange']['startOffset'], locations['textRange']['endOffset']))
         else:
             value = [instance_id,issue['component'],'null', 'null',issue['textRange']['startLine'], issue['textRange']['endLine'], issue['textRange']['startOffset'], issue['textRange']['endOffset'], 'null', 'null']
             value_str = ','.join(self.to_sql(value) for value in value)
@@ -80,7 +85,12 @@ class Database:
                 self.conn.rollback()
                 return False
             self.conn.commit()
-            return True
+            location_id = self.cursor.lastrowid
+            file_path = issue['component'].split(":")[1]
+            if file_path not in res:
+                res[file_path] = []
+            res[file_path].append(RawIssueLocation(location_id, file_path, issue['textRange']['startLine'], issue['textRange']['endLine'], issue['textRange']['startOffset'], issue['textRange']['endOffset']))
+        return True
 
     def insert_issue_instance(self,issue,type_id,version_id):
         table_name = 'issue_instance'

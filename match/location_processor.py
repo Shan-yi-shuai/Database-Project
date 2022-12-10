@@ -1,4 +1,4 @@
-from ast_recorder import *
+from match.ast_recorder import *
 
 class LocationProcessor:
     def __init__(self, file_path: str) -> None:

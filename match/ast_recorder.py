@@ -1,5 +1,5 @@
 import ast
-from issue import *
+from match.issue import *
 
 class LocationSyntaxRecorder(ast.NodeVisitor):
     def __init__(self, location: RawIssueLocation) -> None:
