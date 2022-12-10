@@ -52,7 +52,10 @@ class Database:
         if value == 'null':
             return value
         if type(value) == str:
-            value =escape_string(value)
+            value = escape_string(value)
+            return "'%s'" % value
+        if type(value) == list:
+            value = ','.join('None' if value == None else value  for value in value)
             return "'%s'" % value
         return value
     # 插入数据
@@ -90,6 +93,21 @@ class Database:
             if file_path not in res:
                 res[file_path] = []
             res[file_path].append(RawIssueLocation(location_id, file_path, issue['textRange']['startLine'], issue['textRange']['endLine'], issue['textRange']['startOffset'], issue['textRange']['endOffset']))
+        return True
+    
+    def update_issue_location(self, location_id, table_key:list, value:list):
+        table_name = 'issue_location'
+        # key_str = ','.join(table_key)
+        # value_str = ','.join(self.to_sql(value) for value in value)
+        for i in range(len(table_key)):
+            key_str = table_key[i]
+            value_str = self.to_sql(value[i])
+            sql = "update %s set %s = %s where location_id = %d" %(table_name, key_str, value_str, location_id)
+            result = self.execute(sql)
+            if result != True:
+                self.conn.rollback()
+                return False
+        self.conn.commit()
         return True
 
     def insert_issue_instance(self,issue,type_id,version_id):
