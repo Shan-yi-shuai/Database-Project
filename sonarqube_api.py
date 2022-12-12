@@ -39,6 +39,10 @@ class SonarQube:
     def test(self):
         return self.client.metrics.search_metrics()
 
+    def create_project(self,project_name):
+        return self.client.projects.create_project(project=project_name, name="test project", visibility="private")
+    
+
 
 
 # s = SonarQube()

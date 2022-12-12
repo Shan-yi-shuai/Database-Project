@@ -27,8 +27,8 @@ database.create_table(sql_create_issue_match,'issue_match')
 
 # sonarqube
 s = SonarQube()
-# project = s.getProject('test')
 issues = s.getIssues('pj_repo')
+
 version_id = database.insert_version(issues[0])
 issue_location_dict = dict()
 for issue in issues:
@@ -42,6 +42,6 @@ for file_path in issue_location_dict:
     processor = LocationProcessor(repo_dir + file_path)
     for raw_location in issue_location_dict[file_path]:
         location = processor.process(raw_location)
-        print("---------------------------------")
-        print(location.id, location.code, location.include_records)
+        # print("---------------------------------")
+        # print(location.id, location.code, location.include_records)
         database.update_issue_location(location.id,['code', 'records','include_records'],[location.code,location.records,location.include_records])
