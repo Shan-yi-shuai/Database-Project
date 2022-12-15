@@ -36,4 +36,8 @@ class SonarQube:
         return self.client.metrics.search_metrics()
 
     def create_project(self, project_name):
-        return self.client.projects.create_project(project=project_name, name=project_name, visibility="private")
+        return self.client.projects.create_project(project=project_name, name=project_name, visibility="public")
+    
+    def delete_project(self, project_name):
+        return self.client.projects.delete_project(project_name)
+

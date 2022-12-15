@@ -2,8 +2,10 @@ import git
 import os
 import shutil
 from pjconfig import config
+from sonarqube_api import SonarQube
 
 repo = git.Repo(config["repo_dir"])
+sonar = SonarQube(config["sonarqube"])
 
 commit_list = []
 for commit in repo.iter_commits():
@@ -15,6 +17,10 @@ for commit in repo.iter_commits():
 
 for index, commit_sha in enumerate(commit_list):
     project_name = config["sonar_project_name"] + "_commit" + str(index)
+    try:
+        sonar.create_project(project_name)
+    except:
+        pass
     os.mkdir("commit_file")
     repo.git.checkout(commit_sha)
     commit = repo.commit(commit_sha)
@@ -35,3 +41,4 @@ for index, commit_sha in enumerate(commit_list):
     os.system(config["sonar_scanner_cmd"] % project_name)
     os.chdir("..")
     shutil.rmtree("commit_file")
+    sonar.delete_project(project_name)
