@@ -1,10 +1,10 @@
 import git
 import os
 import shutil
+from pjconfig import config
 
-repo_path = "../test-repo-for-database-pj"
-repo = git.Repo(repo_path)
-repo_name = "pj_repo"
+repo = git.Repo(config["repo_dir"])
+
 commit_list = []
 for commit in repo.iter_commits():
     commit_list.insert(0,commit.hexsha)
@@ -12,7 +12,9 @@ for commit in repo.iter_commits():
     # print(commit.message)
     # print(commit.author.name)
     # print(commit.authored_datetime)
+
 for index, commit_sha in enumerate(commit_list):
+    project_name = config["sonar_project_name"] + "_commit" + str(index)
     os.mkdir("commit_file")
     repo.git.checkout(commit_sha)
     commit = repo.commit(commit_sha)
@@ -25,11 +27,11 @@ for index, commit_sha in enumerate(commit_list):
         file.replace('}','')
         if ' ' in file:
             continue
-        file = repo_path + '/' + file
+        file = config["repo_dir"] + file
      
         if os.path.exists(file):
             shutil.copy(file, "commit_file")
     os.chdir("commit_file")
-    os.system("sonar-scanner -D sonar.projectKey=%s_commit%d"% (repo_name,index))
+    os.system(config["sonar_scanner_cmd"] % project_name)
     os.chdir("..")
     shutil.rmtree("commit_file")

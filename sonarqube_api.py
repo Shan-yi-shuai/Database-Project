@@ -1,16 +1,12 @@
 from sonarqube import SonarQubeClient
-# import sonarqube as sonar
-
-
 
 class SonarQube:
 
-    def __init__(self,url="http://localhost:9000",username="admin",password="gp9nmd.XXPPXgm#") -> None:
-        username = username
-        password = password
-        sonarqube_url = url
-        self.client = SonarQubeClient(username=username, password=password,
-                                 sonarqube_url=sonarqube_url)
+    def __init__(self, config: dict) -> None:
+        username = config["username"]
+        password = config["password"]
+        sonarqube_url = config["url"]
+        self.client = SonarQubeClient(username=username, password=password, sonarqube_url=sonarqube_url)
 
     # 获取项目列表
     def getProjects(self):
@@ -39,20 +35,5 @@ class SonarQube:
     def test(self):
         return self.client.metrics.search_metrics()
 
-    def create_project(self,project_name):
-        return self.client.projects.create_project(project=project_name, name="test project", visibility="private")
-    
-
-
-
-# s = SonarQube()
-# all_project_info = s.getProjects()
-# for project_info in all_project_info:
-#     component = project_info.get("key")
-#     b = s.getMeasures(component)
-#     # 获取所有issues的信息
-#     issues = s.getIssues(component)
-#     # print(b)
-#     print(type(issues[0]['flows'][0]['locations'][0]['textRange']['startLine']))
-#     # test = s.test()
-#     # print(test)
+    def create_project(self, project_name):
+        return self.client.projects.create_project(project=project_name, name=project_name, visibility="private")

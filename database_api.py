@@ -160,68 +160,6 @@ class Database:
         self.conn.commit()
         return id
 
-    # def insert_table(self,data,table_name):
-    #     def to_sql(value):
-    #         if type(value) == str:
-    #             return "'%s'" % value
-    #         return value
-    #     key_names = list(data)
-    #     key_str = ','.join(key_names)
-    #     rollback = False
-    #     for i,row in data.iterrows():
-    #         values = []
-    #         for key in key_names:
-    #             values.append(str(row[key]))
-    #         value_str = ','.join(to_sql(value) for value in values)
-    #         old_value = value_str
-    #         count = 0
-    #         while(True):
-    #             sql = "insert into %s(%s) values(%s)" %(table_name, key_str, value_str)
-    #             result = self.execute(sql)
-    #             if result == True and count == 0:
-    #                 break
-    #             elif result == True and count != 0:
-    #                 self.log.solution_log('modify the data\nchange old value:(%s) to new value:(%s)' %(old_value, value_str))
-    #                 break
-    #             else:
-    #                 choice = self.user_handle_error(key_str,value_str)
-    #                 if choice == 'j':
-    #                     self.log.solution_log('ignore the data')
-    #                     break
-    #                 elif choice == 'c':
-    #                     rollback = True
-    #                     self.log.solution_log('cancel data import')
-    #                     break
-    #                 else :
-    #                     value_str = choice.split(':')[1]
-    #             count = count + 1
-    #         if rollback:
-    #             break
-    #     if rollback:
-    #         self.conn.rollback()
-    #     else:
-    #         self.conn.commit()
-
-    # def user_handle_error(self,key,value):
-    #     print('input j to ignore the error')
-    #     print('input m to modify the data')
-    #     print('input c to cancel import')
-    #     choice = input('Your choice:')
-    #     while (choice != 'j' and choice != 'm' and choice != 'c'):
-    #         print("Wrong input!")
-    #         choice = input('Your choice:')
-    #     if choice == 'j':
-    #         return 'j'
-        
-    #     if choice == 'c':
-    #         return 'c'
-        
-    #     if choice == 'm':
-    #         print("key:(%s) old_value:(%s)" %(key,value))
-    #         new_value = input("new_value:")
-    #         return 'm:' + new_value
-
-
 # 日志：记录报错以及解决方案
 class Log:
     def __init__(self) -> None:
@@ -265,28 +203,3 @@ def get_config(file_path):
 def get_create_sql(file_path):
     with open(file_path,encoding='utf-8') as file:
         return file.read()
-
-# # 获取数据库配置
-# config = get_config('./config.txt')
-# # 读取数据
-# # room_data = pd.read_csv('room.csv',encoding="gbk",keep_default_na=False)
-# # student_data = pd.read_csv('student.csv',keep_default_na=False)
-# # 获取创建表的sql语句
-# sql_create_issue_type = get_create_sql('sql/create_issue_type.txt')
-# sql_create_issue_instance = get_create_sql('sql/create_issue_instance.txt')
-# sql_create_issue_location = get_create_sql('sql/create_issue_location.txt')
-# sql_create_issue_case = get_create_sql('sql/create_issue_case.txt')
-# sql_create_issue_match = get_create_sql('sql/create_issue_match.txt')
-# # 创建数据库
-# database = Database(config)
-# # 创建数据表
-# database.create_table(sql_create_issue_type,'issue_type')
-# database.create_table(sql_create_issue_instance,'issue_instance')
-# database.create_table(sql_create_issue_location,'issue_location')
-# database.create_table(sql_create_issue_case,'issue_case')
-# database.create_table(sql_create_issue_match,'issue_match')
-# 导入数据库
-# database.insert_table(room_data,'room')
-# database.insert_table(student_data,'student')
-
-        
