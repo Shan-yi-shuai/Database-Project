@@ -27,8 +27,8 @@ database.create_table(sql_create_issue_match,'issue_match')
 
 # sonarqube
 s = SonarQube()
-issues = s.getIssues('pj_repo')
-
+# project = s.getProject('test')
+issues = s.getIssues('test')
 version_id = database.insert_version(issues[0])
 issue_location_dict = dict()
 for issue in issues:
@@ -37,7 +37,7 @@ for issue in issues:
     database.insert_issue_location(issue, issue_instance_id, issue_location_dict)
 
 # print(issue_location_dict)
-repo_dir = "D:\\Git\\Git\\test-repo-for-database-pj\\"
+repo_dir = "/Users/jasonyan/Desktop/MockingBird_for_PJ/"
 for file_path in issue_location_dict:
     processor = LocationProcessor(repo_dir + file_path)
     for raw_location in issue_location_dict[file_path]:

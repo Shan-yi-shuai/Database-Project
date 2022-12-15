@@ -5,7 +5,7 @@ from sonarqube import SonarQubeClient
 
 class SonarQube:
 
-    def __init__(self,url="http://localhost:9000",username="admin",password="123") -> None:
+    def __init__(self,url="http://localhost:9000",username="admin",password="gp9nmd.XXPPXgm#") -> None:
         username = username
         password = password
         sonarqube_url = url
