@@ -20,7 +20,7 @@ class LocationProcessor:
     def process_record(self, location: RawIssueLocation) -> tuple[list[str], list[str]]:
         tracker = LocationSyntaxRecorder(location)
         tracker.visit(self.ast_root)
-        return (tracker.include_records, tracker.records)
+        return (tracker.records, tracker.include_records)
     
     def process(self, location: RawIssueLocation):
         return IssueLocation(location, self.process_code(location), *self.process_record(location))

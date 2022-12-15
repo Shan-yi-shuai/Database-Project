@@ -8,9 +8,9 @@ create table issue_location (
         end_line int,
         start_offset int,
         end_offset int,
-        code varchar(255),
+        code varchar(1023),
         msg varchar(255),
-        records varchar(255),
+        records varchar(2047),
         include_records varchar(1023),
         primary key(location_id),
         foreign key(instance_id) references issue_instance(instance_id)

@@ -1,5 +1,4 @@
 import pymysql
-import pandas as pd
 import datetime
 from pymysql.converters import escape_string
 from match.issue import *
