@@ -1,10 +1,13 @@
+from collections import defaultdict
+import time
 import git
 import os
 import shutil
 from pjconfig import config
 from sonarqube_api import SonarQube
 
-repo = git.Repo(config["repo_dir"])
+repo_dir = config["repo_dir"]
+repo = git.Repo(repo_dir)
 sonar = SonarQube(config["sonarqube"])
 
 commit_list = []
@@ -16,29 +19,41 @@ for commit in repo.iter_commits():
     # print(commit.authored_datetime)
 
 for index, commit_sha in enumerate(commit_list):
-    project_name = config["sonar_project_name"] + "_commit" + str(index)
+    project_name = config["sonar_project_name"]
     try:
         sonar.create_project(project_name)
     except:
         pass
-    os.mkdir("commit_file")
     repo.git.checkout(commit_sha)
     commit = repo.commit(commit_sha)
     print('---------------------------------')
-    for file, lines in commit.stats.files.items():
-        # 感觉git commit文件这里可能还有点问题，我处理的比较粗糙
-        if "=> " in file:
-            file = file.split("=> ")[1]
-        # {hifigan => vocoder/hifigan}/config_16k_.json
-        file.replace('}','')
-        if ' ' in file:
-            continue
-        file = config["repo_dir"] + file
-     
-        if os.path.exists(file):
-            shutil.copy(file, "commit_file")
+    if index == 0:
+        shutil.copytree(repo_dir, "commit_file")
+    else:
+        os.mkdir("commit_file")
+        file_changes = defaultdict(list)
+        for diff in commit.diff("Head~1"):
+            if diff.change_type == 'A':
+                file_changes['delete'].append(diff.b_blob.path)
+                continue
+            elif diff.change_type == 'D':
+                file_changes['add'].append(diff.a_blob.path)
+                file_to_copy = diff.a_blob.path
+            elif diff.change_type == 'M':
+                file_changes['modify'].append(diff.b_blob.path)
+                file_to_copy = diff.b_blob.path
+            elif diff.change_type == 'R':
+                file_changes['rename'].append((diff.a_blob.path, diff.b_blob.path))
+                file_to_copy = diff.a_blob.path
+            path = "./commit_file/" + file_to_copy
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
+            shutil.copy(repo_dir + file_to_copy, path)
+        with open('changed_files.txt', 'w') as f:
+            f.write(str(file_changes))
     os.chdir("commit_file")
     os.system(config["sonar_scanner_cmd"] % project_name)
     os.chdir("..")
+    os.system("python3 add_to_database.py %s %s %s" % (commit_sha, commit.committed_datetime.isoformat(), commit.committer))
     shutil.rmtree("commit_file")
     sonar.delete_project(project_name)

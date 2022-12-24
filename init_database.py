@@ -1,8 +1,5 @@
 from pjconfig import config
-from sonarqube_api import *
 from database_api import *
-from match.location_processor import *
-
 
 # 获取创建表的sql语句
 sql_create_issue_type = get_create_sql('sql/create_issue_type.txt')
@@ -20,20 +17,3 @@ database.create_table(sql_create_issue_instance,'issue_instance')
 database.create_table(sql_create_issue_location,'issue_location')
 database.create_table(sql_create_issue_case,'issue_case')
 database.create_table(sql_create_issue_match,'issue_match')
-
-# sonarqube
-s = SonarQube(config["sonarqube"])
-issues = s.getIssues(config["sonar_project_name"])
-
-version_id = database.insert_version(issues[0])
-issue_location_dict = dict()
-for issue in issues:
-    issue_type_id = database.insert_issue_type(issue)
-    issue_instance_id = database.insert_issue_instance(issue, issue_type_id,version_id)
-    database.insert_issue_location(issue, issue_instance_id, issue_location_dict)
-
-for file_path in issue_location_dict:
-    processor = LocationProcessor(config["repo_dir"] + file_path)
-    for raw_location in issue_location_dict[file_path]:
-        location = processor.process(raw_location)
-        database.update_issue_location(location.id,['code', 'records','include_records'],[location.code,location.records,location.include_records])
