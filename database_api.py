@@ -160,6 +160,18 @@ class Database:
         self.conn.commit()
         return id
 
+    def insert_match(self,match):
+        True
+    
+    def insert_case(self,match):
+        True
+
+    def select_new_branch_issues(self,commit_hash):
+        table_name = 'issue_instance'
+        commit_hash = self.to_sql(commit_hash)
+        sql = "select * from %s where commit_hash = %d"%(table_name,commit_hash)
+        result = self.execute(sql)
+        return result
 # 日志：记录报错以及解决方案
 class Log:
     def __init__(self) -> None:

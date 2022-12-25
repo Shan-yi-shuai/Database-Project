@@ -37,3 +37,4 @@ for file_path in issue_location_dict:
     for raw_location in issue_location_dict[file_path]:
         location = processor.process(raw_location)
         database.update_issue_location(location.id,['code', 'records','include_records'],[location.code,location.records,location.include_records])
+    
