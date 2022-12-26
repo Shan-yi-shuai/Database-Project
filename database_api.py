@@ -111,9 +111,9 @@ class Database:
 
     def insert_issue_instance(self,issue,type_id,version_id):
         table_name = 'issue_instance'
-        table_key = ['type_id','version_id','commit_hash','commit_time','committer','file_path','description']
+        table_key = ['type_id','version_id','commit_hash','file_path','description']
         key_str = ','.join(table_key)
-        value = [type_id,version_id,issue['hash'],issue['creationDate'],issue['author'],issue['component'],issue['message']]
+        value = [type_id,version_id,issue['hash'],issue['component'],issue['message']]
         value_str = ','.join(self.to_sql(value) for value in value)
         sql = "insert into %s(%s) values(%s)" %(table_name, key_str, value_str)
         result = self.execute(sql)
@@ -159,6 +159,58 @@ class Database:
             return -1
         self.conn.commit()
         return id
+    
+    def select_issue_instance(self, keys, values):
+        sql = "select * from issue_instance where (%s)=(%s)" % (','.join(keys), ','.join(self.to_sql(v) for v in values))
+        self.cursor.execute(sql)
+        return self.cursor.fetchall()
+    
+    def select_issue_location(self, keys, values):
+        sql = "select * from issue_location where (%s)=(%s)" % (','.join(keys), ','.join(self.to_sql(v) for v in values))
+        self.cursor.execute(sql)
+        return self.cursor.fetchall()
+    
+    def insert_issue_case(self, iss_inst):
+        table_name = 'issue_case'
+        table_key = ['type_id','version_new','case_status']
+        key_str = ','.join(table_key)
+        value = [iss_inst["type_id"], iss_inst["version_id"], "OPEN"]
+        value_str = ','.join(self.to_sql(value) for value in value)
+        sql = "insert into %s(%s) values(%s)" %(table_name, key_str, value_str)
+        result = self.execute(sql)
+        id = self.cursor.lastrowid
+        if result != True:
+            self.conn.rollback()
+            return -1
+        self.conn.commit()
+        return id
+    
+    def update_issue_instance_case(self, instance_id, case_id):
+        sql = "update issue_instance set case_id = %s where instance_id = %d" % (case_id, instance_id)
+        result = self.execute(sql)
+        if result != True:
+            self.conn.rollback()
+            return False
+        self.conn.commit()
+        return True
+    
+    def close_issue_case(self, case_id, version_disappear):
+        sql = "update issue_case set version_disappear=%s,case_status='CLOSED' where case_id = %s" % (version_disappear, case_id)
+        result = self.execute(sql)
+        if result != True:
+            self.conn.rollback()
+            return False
+        self.conn.commit()
+        return True
+    
+    def match_issue_case(self, o_inst_id, n_inst_id):
+        sql = "UPDATE issue_instance SET case_id = (SELECT case_id FROM issue_instance WHERE instance_id = %s) WHERE instance_id = %s" % (o_inst_id, n_inst_id)
+        result = self.execute(sql)
+        if result != True:
+            self.conn.rollback()
+            return False
+        self.conn.commit()
+        return True
 
 # 日志：记录报错以及解决方案
 class Log:

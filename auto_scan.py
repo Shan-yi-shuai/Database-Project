@@ -1,5 +1,5 @@
 from collections import defaultdict
-import time
+import json
 import git
 import os
 import shutil
@@ -50,10 +50,11 @@ for index, commit_sha in enumerate(commit_list):
                 os.makedirs(os.path.dirname(path))
             shutil.copy(repo_dir + file_to_copy, path)
         with open('changed_files.txt', 'w') as f:
-            f.write(str(file_changes))
+            json.dump(file_changes, f)
     os.chdir("commit_file")
     os.system(config["sonar_scanner_cmd"] % project_name)
     os.chdir("..")
-    os.system("python3 add_to_database.py %s %s %s" % (commit_sha, commit.committed_datetime.isoformat(), commit.committer))
+    os.system("python add_to_database.py %s %s %s" % (commit_sha, commit.committed_datetime.isoformat(), commit.committer))
     shutil.rmtree("commit_file")
     sonar.delete_project(project_name)
+    os.system("python match_case.py %s" % (index + 1))
