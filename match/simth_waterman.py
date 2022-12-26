@@ -5,7 +5,7 @@ def point(x, y):
     return '[' + str(x) + ',' + str(y) + ']'
 
 class CalculateSequeceSimilarity(object):
-    def __init__(self, A, B, W, M, N):
+    def __init__(self, A, B, W = 1, M = 1, N = -1/3):
         self.A = A
         self.B = B
         self.W = W
@@ -82,4 +82,9 @@ class CalculateSequeceSimilarity(object):
             self.traceback(A, B, H, path, value, result)
  
     def Answer(self): # 取均值
+        if len(self.similarity) == 0:
+            if len(self.A) >= len(self.B):
+                return (len(self.B) + 1) / (len(self.A) + 1)
+            else:
+                return (len(self.A) + 1) / (len(self.B) + 1)
         return sum(self.similarity) / len(self.similarity)
