@@ -145,11 +145,11 @@ class Database:
         self.conn.commit()
         return self.cursor.lastrowid
 
-    def insert_version(self,issue):
+    def insert_version(self, hash, time, committer):
         table_name = 'version'
         table_key = ['commit_hash','commit_time','committer']
         key_str = ','.join(table_key)
-        value = [issue['hash'],issue['creationDate'],issue['author']]
+        value = [hash, time, committer]
         value_str = ','.join(self.to_sql(value) for value in value)
         sql = "insert into %s(%s) values(%s)" %(table_name, key_str, value_str)
         result = self.execute(sql)
@@ -166,7 +166,7 @@ class Database:
     def insert_case(self,match):
         True
 
-    def select_new_branch_issues(self,commit_hash):
+    def select_issues_by_commit_hash(self,commit_hash):
         table_name = 'issue_instance'
         commit_hash = self.to_sql(commit_hash)
         sql = "select * from %s where commit_hash = %d"%(table_name,commit_hash)

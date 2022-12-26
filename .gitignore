@@ -4,3 +4,5 @@ __pycache__
 .DS_Store
 config.json
 log.txt
+commit_file
+changed_files.txt
