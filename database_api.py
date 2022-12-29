@@ -218,12 +218,50 @@ class Database:
     def insert_case(self,match):
         True
 
-    def select_issues_by_commit_hash(self,commit_hash):
-        table_name = 'issue_instance'
+    def select_version_commit_hash(self,commit_hash):
+        table_name = 'version'
         commit_hash = self.to_sql(commit_hash)
-        sql = "select * from %s where commit_hash = %d"%(table_name,commit_hash)
-        result = self.execute(sql)
-        return result
+        sql = "select * from %s where commit_hash = %s"%(table_name,commit_hash)
+        self.execute(sql)
+        return self.cursor.fetchone()
+    
+    def select_issues_by_version(self,version_id):
+        table_name = 'issue_instance'
+        version_id = self.to_sql(version_id)
+        sql = "select * from %s where version_id = %s"%(table_name,version_id)
+        self.execute(sql)
+        return self.cursor.fetchall()
+    
+    def select_all_version_id(self):
+        table_name = 'issue_instance'
+        sql = "select version_id from %s "%(table_name)
+        self.execute(sql)
+        return self.cursor.fetchall()
+    
+    def select_all_issue(self):
+        table_name = 'issue_instance'
+        sql = "select * from %s "%(table_name)
+        self.execute(sql)
+        return self.cursor.fetchall()
+
+    def select_all_type(self):
+        table_name = 'issue_type'
+        sql = "select * from %s "%(table_name)
+        self.execute(sql)
+        return self.cursor.fetchall()
+
+    def select_all_case(self):
+        table_name = 'issue_case'
+        sql = "select * from %s "%(table_name)
+        self.execute(sql)
+        return self.cursor.fetchall()
+
+    def select_all_version(self):
+        table_name = 'version'
+        sql = "select * from %s "%(table_name)
+        self.execute(sql)
+        return self.cursor.fetchall()
+    
 # 日志：记录报错以及解决方案
 class Log:
     def __init__(self) -> None:
