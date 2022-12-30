@@ -2,6 +2,7 @@ from database_api import *
 from pjconfig import config
 import pandas as pd
 import datetime
+import sys
 
 database = Database(config["database"])
 
@@ -85,6 +86,7 @@ def analyse_by_time(issues):
         return
     df_issue = pd.DataFrame(issues)
     # 需要展示哪些信息呢？
+    print('---------------------duration---------------------')
     print(df_issue[['instance_id','file_path','description','duration']].sort_values(by='duration'))
 
 def analyse_by_type_time(issues):
@@ -152,8 +154,51 @@ def analyse_any_period(start_time,end_time):
     analyse_by_time(period_issue)
     analyse_by_type_time(period_issue)
 
-
+def analyse_committer_period(committer,start_time,end_time):
+    start_time = time_converter(start_time)
+    end_time = time_converter(end_time)
+    all_version = database.select_all_version()
+    version_start = get_oldest_version_id()
+    version_end = get_latest_version_id()
+    sorted_version = sorted(all_version, key=lambda x: x['version_id'], reverse=False)
+    for version in sorted_version:
+        if time_converter(version['commit_time']) >= start_time:
+            version_start = version['version_id']
+            break;
+    sorted_version = sorted(all_version, key=lambda x: x['version_id'], reverse=True)
+    for version in sorted_version:
+        if time_converter(version['commit_time']) <= end_time:
+            version_end = version['version_id']
+            break;
+    version_list = []
+    for i in range(version_start,version_end+1):
+        if all_version[i-1]['committer'] == committer:
+            version_list.append(all_version[i-1]['version_id'])
+    all_issue = database.select_all_issue()
+    df_issue = pd.DataFrame(all_issue)
+    period_issue = df_issue[df_issue['version_id'].isin(version_list)].to_dict(orient='records')
+    period_issue = compute_issue_duration(period_issue)
+    analyse_by_type(period_issue)
+    analyse_by_time(period_issue)
+    analyse_by_type_time(period_issue)
 
 # analyse_latest_version('new_version','type_time')
 # analyse_any_version('7f9bc054f1c649a30aaea66376607352e6daec31')
-analyse_any_period('2022-12-05T15:47:11+08:00','')
+# analyse_any_period('2022-12-05T15:56:09+08:00','')
+# analyse_developer_period('','2022-12-05T15:56:09+08:00','')
+
+def analyse(mode,arg_list):
+    if mode == 'latest-version':
+        analyse_latest_version(arg_list[0])
+    elif mode == 'any-version':
+        analyse_any_version(arg_list[0])
+    elif mode == 'period':
+        analyse_any_period(arg_list[0],arg_list[1])
+    elif mode == 'committer-period':
+        analyse_committer_period(arg_list[0],arg_list[1],arg_list[2])
+    else: print('wrong command!')
+pd.set_option('display.max_rows', 20) # 设置每页最大行数
+print(pd.options.display.max_rows)
+mode = sys.argv[1]
+arg_list = sys.argv[2:len(sys.argv)]
+analyse(mode,arg_list)
