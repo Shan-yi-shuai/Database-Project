@@ -232,6 +232,20 @@ class Database:
         self.execute(sql)
         return self.cursor.fetchall()
     
+    def select_locations_by_instance(self,instance_id):
+        table_name = 'issue_location'
+        instance_id = self.to_sql(instance_id)
+        sql = "select * from %s where instance_id = %s"%(table_name,instance_id)
+        self.execute(sql)
+        return self.cursor.fetchall()
+    
+    def select_issues_by_case(self,case_id):
+        table_name = 'issue_instance'
+        case_id = self.to_sql(case_id)
+        sql = "select * from %s where case_id = %s"%(table_name,case_id)
+        self.execute(sql)
+        return self.cursor.fetchall()
+    
     def select_all_version_id(self):
         table_name = 'issue_instance'
         sql = "select version_id from %s "%(table_name)

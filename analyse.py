@@ -5,6 +5,8 @@ import datetime
 import sys
 
 database = Database(config["database"])
+pd.set_option('expand_frame_repr', False)
+# pd.set_option('display.max_rows', 20) # 设置每页最大行数
 
 def time_converter(time_string):
     """
@@ -79,7 +81,8 @@ def compute_issue_duration(issues):
         start_time = version_dict[case['version_new']]['commit_time']
         end_time = time if case['version_disappear'] is None else version_dict[case['version_disappear']]['commit_time']
         end_time = time_converter(end_time)
-        issue['duration'] = end_time - datetime.datetime.strptime(start_time.split("+")[0], '%Y-%m-%dT%H:%M:%S')
+        issue['duration'] = (end_time - datetime.datetime.strptime(start_time.split("+")[0], '%Y-%m-%dT%H:%M:%S'))
+        # print(issue['duration'],type(issue['duration']))
     return issues
 def analyse_by_time(issues):
     if len(issues) == 0:
@@ -94,7 +97,15 @@ def analyse_by_type_time(issues):
         return
     df_issue = pd.DataFrame(issues)
     print('---------------------duration---------------------')
-    print(df_issue.groupby('type_id').agg({'duration': ['mean', 'median']}))
+    # print(df_issue.groupby('type_id').agg({'duration': ['mean', 'median']}),type(df_issue.groupby('type_id').agg({'duration': ['mean', 'median']})))
+    df_group = df_issue.groupby('type_id').agg({'duration': ['mean', 'median']})
+    mean_list = []
+    median_list = []
+    for index,row in df_group['duration', 'mean'].iteritems():
+        mean_list.append(str(row).split('.')[0])
+    for index,row in df_group['duration', 'median'].iteritems():
+        median_list.append(str(row).split('.')[0]) 
+    print(pd.DataFrame(list(zip(mean_list,median_list)),columns=['mean','median']))
 
 def analyse_latest_version(method):
     latest_version_id = get_latest_version_id()
@@ -150,9 +161,23 @@ def analyse_any_period(start_time,end_time):
     df_issue = pd.DataFrame(all_issue)
     period_issue = df_issue[df_issue['version_id'].isin(list(range(version_start,version_end+1)))].to_dict(orient='records')
     period_issue = compute_issue_duration(period_issue)
-    analyse_by_type(period_issue)
-    analyse_by_time(period_issue)
-    analyse_by_type_time(period_issue)
+    all_cases = database.select_all_case()
+    case_dict = {}
+    for case in all_cases:
+        case_dict[case['case_id']] = case
+    for issue in period_issue:
+        issue['case_status'] = case_dict[issue['case_id']]['case_status']
+    df_issues = pd.DataFrame(period_issue)
+    # 引入
+    print('%%%%%%%%%%%%%%%%%%%%%Issue introduce%%%%%%%%%%%%%%%%%%%%%')
+    open_issues = df_issues[df_issues['case_status'] == 'OPEN'].to_dict(orient='records')
+    analyse_by_type(open_issues)
+    # 消除
+    print('%%%%%%%%%%%%%%%%%%%%%Issue eliminate%%%%%%%%%%%%%%%%%%%%%')
+    close_issues = df_issues[df_issues['case_status'] == 'CLOSED'].to_dict(orient='records')
+    analyse_by_type(close_issues)
+    analyse_by_time(close_issues)
+    analyse_by_type_time(close_issues)
 
 def analyse_committer_period(committer,start_time,end_time):
     start_time = time_converter(start_time)
@@ -182,10 +207,16 @@ def analyse_committer_period(committer,start_time,end_time):
     analyse_by_time(period_issue)
     analyse_by_type_time(period_issue)
 
-# analyse_latest_version('new_version','type_time')
-# analyse_any_version('7f9bc054f1c649a30aaea66376607352e6daec31')
-# analyse_any_period('2022-12-05T15:56:09+08:00','')
-# analyse_developer_period('','2022-12-05T15:56:09+08:00','')
+def analyse_case(case_id):
+    issues = database.select_issues_by_case(case_id)
+    # 从早到晚展示一个issue的具体信息
+    for issue in issues:
+        locations = database.select_locations_by_instance(issue['instance_id'])
+        print('---------------------instance_information---------------------')
+        print(pd.DataFrame(issue,index=[0])[['instance_id','description']])
+        print('---------------------location---------------------')
+        print(pd.DataFrame(locations)[['file_path','start_line','end_line','start_offset','end_offset']])
+    
 
 def analyse(mode,arg_list):
     if mode == 'latest-version':
@@ -196,9 +227,11 @@ def analyse(mode,arg_list):
         analyse_any_period(arg_list[0],arg_list[1])
     elif mode == 'committer-period':
         analyse_committer_period(arg_list[0],arg_list[1],arg_list[2])
+    elif mode == 'case':
+        analyse_case(arg_list[0])
     else: print('wrong command!')
-pd.set_option('display.max_rows', 20) # 设置每页最大行数
-print(pd.options.display.max_rows)
+
+# print(pd.options.display.max_rows)
 mode = sys.argv[1]
-arg_list = sys.argv[2:len(sys.argv)]
+arg_list = sys.argv[2:len(sys.argv)] + ['']
 analyse(mode,arg_list)
