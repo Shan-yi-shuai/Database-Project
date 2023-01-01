@@ -32,7 +32,27 @@ def time_converter(time_string):
             except ValueError:
                 # 处理其他格式
                 raise ValueError('输入的时间格式不支持！')
-
+def print_page(df):
+    if df.shape[0] > 20:
+        rows = df.shape[0]
+        print(df.iloc[0:20])
+        i = 1
+        rows -= 20
+        while rows > 0:
+            print("next page?(y/n)")
+            x = input()
+            if x != 'y':
+                break
+            print(rows)
+            if rows >= 20:
+                print(df.iloc[20*i:20 * (i+1)])
+                rows -= 20
+                i = i+1
+            else:
+                print(df.iloc[20*i:20 * i + rows])
+                break
+    else:
+        print(df)
 def get_latest_version_id():
     all_version_id = database.select_all_version_id()
     all_version_id = [i['version_id'] for i in all_version_id]
@@ -56,7 +76,27 @@ def analyse_by_type(issues):
     df_types = pd.DataFrame(all_types)
     # 全部信息
     print("---------------------All instance---------------------")
-    print(pd.DataFrame(issues))
+    df = pd.DataFrame(issues)
+    if df.shape[0] > 20:
+        rows = df.shape[0]
+        print(df.iloc[0:20])
+        i = 1
+        rows -= 20
+        while rows > 0:
+            print("next page?(y/n)")
+            x = input()
+            if x != 'y':
+                break
+            print(rows)
+            if rows >= 20:
+                print(df.iloc[20*i:20 * (i+1)])
+                rows -= 20
+                i = i+1
+            else:
+                print(df.iloc[20*i:20 * i + rows])
+                break
+    else:
+        print(df)
     print("---------------------Full detail---------------------")
     print(df_types)
     # rule
@@ -92,7 +132,8 @@ def analyse_by_time(issues):
     df_issue = pd.DataFrame(issues)
     # 需要展示哪些信息呢？
     print('---------------------duration---------------------')
-    print(df_issue[['instance_id','file_path','description','duration']].sort_values(by='duration'))
+    # print(df_issue[['instance_id','file_path','description','duration']].sort_values(by='duration'))
+    print_page(df_issue[['instance_id','file_path','description','duration']].sort_values(by='duration'))
 
 def analyse_by_type_time(issues):
     if len(issues) == 0:
@@ -109,7 +150,7 @@ def analyse_by_type_time(issues):
         mean_list.append(str(row).split('.')[0])
     for index,row in df_group['duration', 'median'].iteritems():
         median_list.append(str(row).split('.')[0]) 
-    print(pd.DataFrame(list(zip(type_id_list,mean_list,median_list)),columns=['type_id','mean','median']))
+    print_page(pd.DataFrame(list(zip(type_id_list,mean_list,median_list)),columns=['type_id','mean','median']))
 
 def analyse_latest_version(method):
     latest_version_id = get_latest_version_id()
@@ -119,7 +160,7 @@ def analyse_latest_version(method):
         analyse_by_type(issues)
     elif method == 'time':
         analyse_by_time(issues)
-    elif method == 'type_time':
+    elif method == 'type-time':
         analyse_by_type_time(issues)
 
 
@@ -283,13 +324,22 @@ def analyse_case(case_id):
         print(pd.DataFrame(locations)[['file_path','start_line','end_line','start_offset','end_offset']])
     
 def analyse_instance(instance_id):
-    instance = database.select_instance_by_id(instance_id)
-    print('---------------------instance---------------------')
+    instance = database.select_instance_by_id(instance_id)[0]
+    location = database.select_locations_by_instance(instance_id)
+    version = database.select_version_by_id(instance['version_id'])
+    type = database.select_type_by_id(instance['type_id'])
+    print('%%%%%%%%%%%%%%%%%%%%%instance%%%%%%%%%%%%%%%%%%%%%')
     print(pd.DataFrame(instance,index=[0]))
+    print('---------------------location---------------------')
+    print(pd.DataFrame(location,index=[0])[['location_id','file_path','start_line','end_line','start_offset','end_offset']])
+    print('---------------------type---------------------')
+    print(pd.DataFrame(type,index=[0]))
+    print('---------------------version---------------------')
+    print(pd.DataFrame(version,index=[0]))
     # location
     # committer
-def analyse_version(version_id=0):
-    if version_id == 0:
+def analyse_version(version_id):
+    if int(version_id) == 0:
         all_version = database.select_all_version()
         print('---------------------All version---------------------')
         print(pd.DataFrame(all_version))
@@ -311,9 +361,20 @@ def analyse(mode,arg_list):
         analyse_case(arg_list[0])
     elif mode == 'version':
         analyse_version(arg_list[0])
+    elif mode == 'instance':
+        analyse_instance(arg_list[0])
     else: print('wrong command!')
 
 # print(pd.options.display.max_rows)
-mode = sys.argv[1]
-arg_list = sys.argv[2:len(sys.argv)] + ['']
-analyse(mode,arg_list)
+# mode = sys.argv[1]
+# arg_list = sys.argv[2:len(sys.argv)] + ['']
+# analyse(mode,arg_list)
+
+while True:
+    print("Enter your command:")
+    x = input()
+    if x == 'quit':
+        break;
+    arg_list = x.split(' ')
+    mode = arg_list[0]
+    analyse(mode,arg_list[1:len(arg_list)])

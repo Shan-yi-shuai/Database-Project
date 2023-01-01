@@ -274,6 +274,13 @@ class Database:
         self.execute(sql)
         return self.cursor.fetchall()
 
+    def select_type_by_id(self,type_id):
+        table_name = 'issue_type'
+        type_id = self.to_sql(type_id)
+        sql = "select * from %s where type_id = %s"%(table_name,type_id)
+        self.execute(sql)
+        return self.cursor.fetchall()
+
     def select_instance_by_version_case(self,version_id,case_id):
         table_name = 'issue_instance'
         case_id = self.to_sql(case_id)
