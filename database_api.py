@@ -246,6 +246,42 @@ class Database:
         self.execute(sql)
         return self.cursor.fetchall()
     
+    def select_case_by_version_new(self,version_id):
+        table_name = 'issue_case'
+        version_id = self.to_sql(version_id)
+        sql = "select * from %s where version_new = %s"%(table_name,version_id)
+        self.execute(sql)
+        return self.cursor.fetchall()
+    
+    def select_case_by_version_disappear(self,version_id):
+        table_name = 'issue_case'
+        version_id = self.to_sql(version_id)
+        sql = "select * from %s where version_disappear = %s"%(table_name,version_id)
+        self.execute(sql)
+        return self.cursor.fetchall()
+    
+    def select_version_by_id(self,version_id):
+        table_name = 'version'
+        version_id = self.to_sql(version_id)
+        sql = "select * from %s where version_id = %s"%(table_name,version_id)
+        self.execute(sql)
+        return self.cursor.fetchall()
+    
+    def select_instance_by_id(self,instance_id):
+        table_name = 'issue_instance'
+        instance_id = self.to_sql(instance_id)
+        sql = "select * from %s where instance_id = %s"%(table_name,instance_id)
+        self.execute(sql)
+        return self.cursor.fetchall()
+
+    def select_instance_by_version_case(self,version_id,case_id):
+        table_name = 'issue_instance'
+        case_id = self.to_sql(case_id)
+        version_id = self.to_sql(version_id)
+        sql = "select * from %s where version_id = %s and case_id = %s"%(table_name,version_id,case_id)
+        self.execute(sql)
+        return self.cursor.fetchall()
+    
     def select_all_version_id(self):
         table_name = 'issue_instance'
         sql = "select version_id from %s "%(table_name)

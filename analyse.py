@@ -55,6 +55,8 @@ def analyse_by_type(issues):
         type_dict[issue['type_id']]['sum'] += 1
     df_types = pd.DataFrame(all_types)
     # 全部信息
+    print("---------------------All instance---------------------")
+    print(pd.DataFrame(issues))
     print("---------------------Full detail---------------------")
     print(df_types)
     # rule
@@ -99,13 +101,15 @@ def analyse_by_type_time(issues):
     print('---------------------duration---------------------')
     # print(df_issue.groupby('type_id').agg({'duration': ['mean', 'median']}),type(df_issue.groupby('type_id').agg({'duration': ['mean', 'median']})))
     df_group = df_issue.groupby('type_id').agg({'duration': ['mean', 'median']})
+    # print(df_group)
     mean_list = []
     median_list = []
+    type_id_list = list(set(df_issue['type_id']))
     for index,row in df_group['duration', 'mean'].iteritems():
         mean_list.append(str(row).split('.')[0])
     for index,row in df_group['duration', 'median'].iteritems():
         median_list.append(str(row).split('.')[0]) 
-    print(pd.DataFrame(list(zip(mean_list,median_list)),columns=['mean','median']))
+    print(pd.DataFrame(list(zip(type_id_list,mean_list,median_list)),columns=['type_id','mean','median']))
 
 def analyse_latest_version(method):
     latest_version_id = get_latest_version_id()
@@ -129,17 +133,29 @@ def analyse_any_version(commit_hash,method=0):
         case_dict[case['case_id']] = case
     for issue in issues:
         issue['case_status'] = case_dict[issue['case_id']]['case_status']
-    df_issues = pd.DataFrame(issues)
+    # df_issues = pd.DataFrame(issues)
     # 引入
     print('%%%%%%%%%%%%%%%%%%%%%Issue introduce%%%%%%%%%%%%%%%%%%%%%')
-    open_issues = df_issues[df_issues['case_status'] == 'OPEN'].to_dict(orient='records')
-    analyse_by_type(open_issues)
+    open_case = database.select_case_by_version_new(version['version_id'])
+    open_issue_list = []
+    for case in open_case:
+        open_issue_list.append(database.select_instance_by_version_case(version['version_id'],case['case_id'])[0])
+    # open_issues = df_issues[df_issues['case_status'] == 'OPEN'].to_dict(orient='records')
+    # print(open_issue_list)
+    analyse_by_type(open_issue_list)
     # 消除
     print('%%%%%%%%%%%%%%%%%%%%%Issue eliminate%%%%%%%%%%%%%%%%%%%%%')
-    close_issues = df_issues[df_issues['case_status'] == 'CLOSED'].to_dict(orient='records')
-    analyse_by_type(close_issues)
-    analyse_by_time(close_issues)
-    analyse_by_type_time(close_issues)
+    # close_issues = df_issues[df_issues['case_status'] == 'CLOSED'].to_dict(orient='records')
+    close_case = database.select_case_by_version_disappear(version['version_id'])
+    close_issue_list = []
+    for case in close_case:
+        issues = database.select_issues_by_case(case['case_id'])
+        issues = sorted(issues, key=lambda x: x['version_id'], reverse=True)
+        close_issue_list.append(issues[0])
+    close_issue_list = compute_issue_duration(close_issue_list)
+    analyse_by_type(close_issue_list)
+    analyse_by_time(close_issue_list)
+    analyse_by_type_time(close_issue_list)
 
 def analyse_any_period(start_time,end_time):
     start_time = time_converter(start_time)
@@ -170,19 +186,39 @@ def analyse_any_period(start_time,end_time):
     df_issues = pd.DataFrame(period_issue)
     # 引入
     print('%%%%%%%%%%%%%%%%%%%%%Issue introduce%%%%%%%%%%%%%%%%%%%%%')
-    open_issues = df_issues[df_issues['case_status'] == 'OPEN'].to_dict(orient='records')
-    analyse_by_type(open_issues)
+    open_case = []
+    for i in range(version_start,version_end+1):
+        open_case += database.select_case_by_version_new(i)
+    open_issue_list = []
+    for case in open_case:
+        issues = database.select_issues_by_case(case['case_id'])
+        issues = sorted(issues, key=lambda x: x['version_id'], reverse=False)
+        open_issue_list.append(issues[0])
+    analyse_by_type(open_issue_list)
+    # open_issues = df_issues[df_issues['case_status'] == 'OPEN'].to_dict(orient='records')
+    # analyse_by_type(open_issues)
     # 消除
     print('%%%%%%%%%%%%%%%%%%%%%Issue eliminate%%%%%%%%%%%%%%%%%%%%%')
-    close_issues = df_issues[df_issues['case_status'] == 'CLOSED'].to_dict(orient='records')
-    analyse_by_type(close_issues)
-    analyse_by_time(close_issues)
-    analyse_by_type_time(close_issues)
+    close_case = []
+    for i in range(version_start,version_end+1):
+        close_case += database.select_case_by_version_disappear(i)
+    close_issue_list = []
+    for case in close_case:
+        issues = database.select_issues_by_case(case['case_id'])
+        issues = sorted(issues, key=lambda x: x['version_id'], reverse=True)
+        close_issue_list.append(issues[0])
+    close_issue_list = compute_issue_duration(close_issue_list)
+    analyse_by_type(close_issue_list)
+    analyse_by_time(close_issue_list)
+    analyse_by_type_time(close_issue_list)
 
 def analyse_committer_period(committer,start_time,end_time):
     start_time = time_converter(start_time)
     end_time = time_converter(end_time)
     all_version = database.select_all_version()
+    version_dict = {}
+    for version in all_version:
+        version_dict[version['version_id']] = version
     version_start = get_oldest_version_id()
     version_end = get_latest_version_id()
     sorted_version = sorted(all_version, key=lambda x: x['version_id'], reverse=False)
@@ -199,13 +235,42 @@ def analyse_committer_period(committer,start_time,end_time):
     for i in range(version_start,version_end+1):
         if all_version[i-1]['committer'] == committer:
             version_list.append(all_version[i-1]['version_id'])
-    all_issue = database.select_all_issue()
-    df_issue = pd.DataFrame(all_issue)
-    period_issue = df_issue[df_issue['version_id'].isin(version_list)].to_dict(orient='records')
-    period_issue = compute_issue_duration(period_issue)
-    analyse_by_type(period_issue)
-    analyse_by_time(period_issue)
-    analyse_by_type_time(period_issue)
+    # 引入
+    print('%%%%%%%%%%%%%%%%%%%%%Issue introduce%%%%%%%%%%%%%%%%%%%%%')
+    open_case = []
+    for i in version_list:
+        open_case += database.select_case_by_version_new(i)
+    open_issue_list = []
+    for case in open_case:
+        issues = database.select_issues_by_case(case['case_id'])
+        issues = sorted(issues, key=lambda x: x['version_id'], reverse=False)
+        open_issue_list.append(issues[0])
+    analyse_by_type(open_issue_list)
+    # open_issues = df_issues[df_issues['case_status'] == 'OPEN'].to_dict(orient='records')
+    # analyse_by_type(open_issues)
+    # 消除
+    print('%%%%%%%%%%%%%%%%%%%%%Issue eliminate%%%%%%%%%%%%%%%%%%%%%')
+    close_case = []
+    for i in version_list:
+        close_case += database.select_case_by_version_disappear(i)
+    close_issue_list = []
+    for case in close_case:
+        issues = database.select_issues_by_case(case['case_id'])
+        issues = sorted(issues, key=lambda x: x['version_id'], reverse=True)
+        issue = issues[0]
+        issue['committer'] = version_dict[issue['version_id']]['committer']
+        close_issue_list.append(issues[0])
+    close_issue_list = compute_issue_duration(close_issue_list)
+    analyse_by_type(close_issue_list)
+    analyse_by_time(close_issue_list)
+    analyse_by_type_time(close_issue_list)
+    # all_issue = database.select_all_issue()
+    # df_issue = pd.DataFrame(all_issue)
+    # period_issue = df_issue[df_issue['version_id'].isin(version_list)].to_dict(orient='records')
+    # period_issue = compute_issue_duration(period_issue)
+    # analyse_by_type(period_issue)
+    # analyse_by_time(period_issue)
+    # analyse_by_type_time(period_issue)
 
 def analyse_case(case_id):
     issues = database.select_issues_by_case(case_id)
@@ -217,6 +282,21 @@ def analyse_case(case_id):
         print('---------------------location---------------------')
         print(pd.DataFrame(locations)[['file_path','start_line','end_line','start_offset','end_offset']])
     
+def analyse_instance(instance_id):
+    instance = database.select_instance_by_id(instance_id)
+    print('---------------------instance---------------------')
+    print(pd.DataFrame(instance,index=[0]))
+    # location
+    # committer
+def analyse_version(version_id=0):
+    if version_id == 0:
+        all_version = database.select_all_version()
+        print('---------------------All version---------------------')
+        print(pd.DataFrame(all_version))
+    else:
+        version = database.select_version_by_id(version_id)
+        print('---------------------version---------------------')
+        print(pd.DataFrame(version,index=[0]))
 
 def analyse(mode,arg_list):
     if mode == 'latest-version':
@@ -229,6 +309,8 @@ def analyse(mode,arg_list):
         analyse_committer_period(arg_list[0],arg_list[1],arg_list[2])
     elif mode == 'case':
         analyse_case(arg_list[0])
+    elif mode == 'version':
+        analyse_version(arg_list[0])
     else: print('wrong command!')
 
 # print(pd.options.display.max_rows)
